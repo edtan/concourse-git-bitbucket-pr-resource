@@ -54,7 +54,7 @@ if [[ "$bitbucket_type" == "server" ]]; then
         | sort_by(.updated_at)' >&3
 elif [[ "$bitbucket_type" == "cloud" ]]; then
     uri="${base_url}/site/oauth2/access_token"
-    access_token=$(curl -X POST -sS --fail -u "${client_id}:${client_password}" $uri | jq -r '.access_token' > "${response}")
+    access_token=$(curl -X POST -sS --fail -u "${client_id}:${client_secret}" $uri -d grant_type=client_credentials | jq -r '.access_token')
 
     uri="${base_url}/api/2.0/repositories/${project}/${repository}/pullrequests?limit=${limit}&state=OPEN"
 
@@ -71,7 +71,7 @@ elif [[ "$bitbucket_type" == "cloud" ]]; then
 
         # get the commit date, which is when the PR last got updated code-wise.
         # the updated_on field in the PR also changes when comment added etc
-        date=$(curl -s --fail -H "Authorization: Bearer ${access_token}" $commit_url | jq -r '.date')        
+        date=$(curl -sS --fail -H "Authorization: Bearer ${access_token}" $commit_url | jq -r '.date')        
         
         prs+="+ [{id:\"$id\", branch: \"$branch\", commit:\"$commit\", updated_at:\"$date\"}]"
     done < <(jq -c '.[]' "${response}")
