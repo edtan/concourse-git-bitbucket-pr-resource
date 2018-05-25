@@ -16,6 +16,8 @@ bitbucket_type=`jq -r '.source.bitbucket_type // "server"' < ${payload}`
 base_url=`jq -r '.source.base_url // ""' < ${payload}`
 username=`jq -r '.source.username // ""' < ${payload}`
 password=`jq -r '.source.password // ""' < ${payload}`
+client_id=`jq -r '.source.client_id // ""' < ${payload}`
+client_secret=`jq -r '.source.client_secret // ""' < ${payload}`
 project=`jq -r '.source.project // ""' < ${payload}`
 repository=`jq -r '.source.repository // ""' < ${payload}`
 dir=`jq -r '.source.dir // ""' < ${payload}`
@@ -46,6 +48,9 @@ if [[ "$bitbucket_type" == "server" ]]; then
         description: .description|tostring
     }'`    
 elif [[ "$bitbucket_type" == "cloud" ]]; then
+    uri="${base_url}/site/oauth2/access_token"
+    access_token=$(curl -X POST -sS --fail -u "${client_id}:${client_secret}" $uri -d grant_type=client_credentials | jq -r '.access_token')
+
     url="${base_url}/api/2.0/repositories/${project}/${repository}/commit/${commit}/statuses/build"
 
 
@@ -65,7 +70,7 @@ elif [[ "$bitbucket_type" == "cloud" ]]; then
     }'` 
 fi
 
-curl -s --fail -u ${username}:${password} -H "Content-Type: application/json" -XPOST ${url} -d "${json}"
+curl -s --fail -H "Authorization: Bearer ${access_token}" -H "Content-Type: application/json" -XPOST ${url} -d "${json}"
 
 jq -n --argjson pr "${pr}" --argjson pr "${pr}" '{
     version: {
