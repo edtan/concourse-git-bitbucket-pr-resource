@@ -26,6 +26,7 @@ if [[ ! ${dir} ]]; then
 fi
 # params
 build=`jq '.params' < ${payload}`
+#rm $payload
 
 if [[ ! ${base_url} ]]; then
     echo "error: source.base_url can't be empty"
@@ -71,7 +72,18 @@ fi
 
 curl -s --fail -H "Authorization: Bearer ${access_token}" -H "Content-Type: application/json" -XPOST ${url} -d "${json}"
 
-jq -n --argjson pr "${pr}" --argjson pr "${pr}" '{
+comment_file=$(echo "$build"| jq -r '.comment_file')
+comment_file=$(eval echo ../$comment_file) # need to go up a directory to get back in the main dir
+if [ -f ${comment_file} ]; then
+  comment="$(cat $comment_file)"
+  pr_id=$(jq -n --argjson pr "${pr}" -r '$pr.id')
+  # add comment to pull request.
+  curl -X POST -sS --fail -v -H "Authorization: Bearer ${access_token}" \
+    "https://api.bitbucket.org/1.0/repositories/${project}/${repository}/pullrequests/${pr_id}/comments" \
+    -d "content=$comment"
+fi
+
+jq -n --argjson pr "${pr}" '{
     version: {
         id: $pr.id|tostring,
         branch: $pr.feature_branch,

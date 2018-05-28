@@ -24,6 +24,8 @@ limit=`jq -r '.source.limit // 100' < ${payload}`
 # version
 version_updated_at=`jq -r '.version.updated_at // 0' < ${payload}`
 
+#rm $payload
+
 if [[ ! ${base_url} ]]; then
     echo "error: source.base_url can't be empty"
     exit 1

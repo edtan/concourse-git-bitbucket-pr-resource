@@ -26,6 +26,8 @@ version=`jq -r '.version' < ${payload}`
 version_id=`jq -r '.version.id' < ${payload}`
 version_branch=`jq -r '.version.branch' < ${payload}`
 
+#rm $payload
+
 if [[ ! ${base_url} ]]; then
     echo "error: source.base_url can't be empty"
     exit 1
